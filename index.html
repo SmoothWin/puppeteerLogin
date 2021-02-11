@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Scraping with electron</title>
+</head>
+<body>
+    <form name="ipcForm" id="omnivox-form" action="#">
+        <label>Student ID: </label><input type="text" id="studentID"/>
+        <label>Passcode: </label><input type="password" id="studentPass"/>
+        <br>
+        <input type="submit" id="submitBtn"/>
+    </form>
+    <script>
+        require('./renderer.js')
+    </script>
+</body>
+</html>
