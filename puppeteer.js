@@ -3,6 +3,14 @@ const jsdom = require('jsdom');
 const {JSDOM} = jsdom;
 const fs = require('fs');
 
+const fullDay = new Map([
+    ['Mon', 'Monday'],
+    ['Tue', 'Tuesday'],
+    ['Wed', 'Wednesday'],
+    ['Thu', 'Thursday'],
+    ['Fri', 'Friday'],
+]);
+
 const scheduleJSON = require('./schedule.json');
 
  async function getSchedule(studentID, password){
@@ -77,44 +85,49 @@ const scheduleJSON = require('./schedule.json');
 
     await browser.close();
 
-    fs.writeFileSync('./test.html',body.toString());
-    const dom = new JSDOM(body.toString());
-    var jSON = convert(dom);
-    console.log(dom);
+    const { document } = new JSDOM(body.toString()).window;
+
+    const { textContent:table } = [...document.querySelectorAll`table`].pop().firstElementChild;
+    const classes = 
+        table.split``.filter(n => n.charCodeAt() !== 160).join``
+        .replace(/\dfree block\w{3}\d{2}\:\d{2}-\d{2}\:\d{2}/ig, '')
+        .split(/\)\d/)
+        .map(n => n.trim())
+        .map(n => {
 
 
-    function convert(html){
-  
-        const fullDay = new Map([
-        ['Mon', 'Monday'],
-        ['Tue', 'Tuesday'],
-        ['Wed', 'Wednesday'],
-        ['Thu', 'Thursday'],
-        ['Fri', 'Friday'],
-    ]);
-    
-        const courses = [...dom.window.document.querySelectorAll('TABLE')].pop().innerText.split(/\s\n/).filter(n => n.length && !/free block/gi.test(n));
-        const schedule = {classes:[]}
-        for(const course of courses){
-    
-            let [name, teacher, ...when] = course.split`\n`;
-    
-            name = name.split('\t').pop();
-            teacher = teacher.match(/(?<=teacher: ).*/).pop();
-            when = when.join``.trimStart().trimEnd()
-            .match(/[A-Za-z]{3}\s+\d{2}:\d{2}\s+-\s+\d{2}:\d{2}/g).map(n=>{ const bits = n.replace('-','').replace(/\s+/g, ' ').split` `;
-             return [ fullDay.get(bits[0]), [bits[1], bits[2]], ['zoomID', 'zoomPWD', 'zoomURL'] ] });
-            schedule.classes.push({ name, teacher, when });
+            const [ _, name, teacher ] = n.match(
+                /\d?([A-Za-z ]+).*teacher: (?:(?:[A-Z]{2}|[A-Z][a-z]+)\s)+(?:[A-Z]{2}|[A-Z][a-z]+)/
+            );
+
+            const when = [];
+
+            const iterator = n.matchAll(/([A-Z][a-z]{2})(\d{2}:\d{2})-(\d{2}:\d{2})/g);
+            while(true){
+
+                const { value, done } = iterator.next();
+
+                if(value === undefined)break;
+
+                const [ __, day, start, end ] = value;
+
+                when.push(
+                    [ fullDay.get(day), [ start, end ], ['zoomID', 'zoomPWD', 'zoomURL'] ]
+                );
+
+                if(done)break;
+            }
+
+            return { name, teacher, when };
+        });
+
+    const asJSON = JSON.stringify({
+        course: {
+            classes
         }
-        console.log(JSON.stringify(schedule))
-    };
+    }, null, 2);
 
-        fs.writeFileSync('./schedule.json', jSON);
-   
-  
-
-    
-   
+    fs.writeFileSync('./schedule.json', asJSON);
 
 };
 
