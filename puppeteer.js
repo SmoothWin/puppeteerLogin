@@ -97,7 +97,7 @@ const scheduleJSON = require('./schedule.json');
 
 
             const [ _, name, teacher ] = n.match(
-                /\d?([A-Za-z ]+).*teacher: (?:(?:[A-Z]{2}|[A-Z][a-z]+)\s)+(?:[A-Z]{2}|[A-Z][a-z]+)/
+                /\d?([A-Za-z ]+).*teacher: ((?:(?:[A-Z]{2}|[A-Z][a-z]+)\s)+(?:[A-Z]{2}|[A-Z][a-z]+))/
             );
 
             const when = [];
